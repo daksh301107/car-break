@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V2V Digital Twin Environment</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="appContainer">
+        <!-- Main Simulation Canvas -->
+        <div id="simArea">
+            <canvas id="roadCanvas"></canvas>
+
+            <!-- Narration Mode Overlay -->
+            <div id="narrationOverlay" class="hidden">
+                <div class="narrationText">System initializing...</div>
+            </div>
+        </div>
+
+        <!-- Right Side Control Panel -->
+        <div id="controlPanel">
+            <div class="panelSection header">
+                <h2>V2V SYSTEM CORE</h2>
+                <div class="status-indicator"></div>
+            </div>
+
+            <!-- Radar System -->
+            <div class="panelSection">
+                <h3>Radar Uplink</h3>
+                <canvas id="radarCanvas"></canvas>
+            </div>
+
+            <!-- Environment Controls -->
+            <div class="panelSection">
+                <h3>Environment Controls</h3>
+                <div class="control-row">
+                    <label>Day/Night</label>
+                    <label class="switch">
+                        <input type="checkbox" id="dayNightToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="control-row">
+                    <label>Fog Density (<span id="fogVal">0</span>%)</label>
+                    <input type="range" id="fogSlider" min="0" max="100" value="0">
+                </div>
+                <div class="control-row">
+                    <label>Rain Intensity (<span id="rainVal">0</span>%)</label>
+                    <input type="range" id="rainSlider" min="0" max="100" value="0">
+                </div>
+                <div class="control-row">
+                    <label>Traffic Density (<span id="trafficVal">5</span>)</label>
+                    <input type="range" id="trafficSlider" min="1" max="15" value="5">
+                </div>
+            </div>
+
+            <!-- Demo Actions -->
+            <div class="panelSection">
+                <h3>Global Systems</h3>
+                <div class="btn-grid">
+                    <button class="demo-btn btn-danger" style="animation: none; font-size: 1.1em; padding: 15px;"
+                        onclick="window.openSOSWizard()">🚨 DISPATCH SOS ALERT</button>
+                    <button class="demo-btn btn-warning" onclick="window.triggerDemo('no_help')">Force Signal Loss
+                        (Drone Test)</button>
+                </div>
+                <div class="speed-controls">
+                    <button class="speed-btn active" onclick="window.setSpeed(1)">1x</button>
+                    <button class="speed-btn" onclick="window.setSpeed(2)">2x</button>
+                    <button class="speed-btn" onclick="window.setSpeed(4)">4x</button>
+                </div>
+            </div>
+
+            <!-- Phase 4: Cyber-Deck Analytics -->
+            <div class="panelSection" id="cyberDeckSection" style="padding-top: 10px;">
+                <h3 class="cyber-title" style="color: #0f0; text-shadow: 0 0 5px #0f0; margin-bottom: 10px; font-family: monospace;">> SYSTEM MONITOR [LIVE]</h3>
+                <div class="cyber-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                    <div class="cyber-box" style="background: rgba(0, 255, 0, 0.05); border: 1px solid #0f0; padding: 10px; border-radius: 4px; text-align: center;">
+                        <div class="cyber-label" style="font-size: 0.75em; color: #0f0; font-family: monospace;">UPLINK (MB/s)</div>
+                        <div class="cyber-value" id="uplinkData" style="font-size: 1.5em; font-weight: bold; color: #fff; font-family: monospace;">0.00</div>
+                    </div>
+                    <div class="cyber-box" style="background: rgba(0, 255, 0, 0.05); border: 1px solid #0f0; padding: 10px; border-radius: 4px; text-align: center;">
+                        <div class="cyber-label" style="font-size: 0.75em; color: #0f0; font-family: monospace;">LATENCY (ms)</div>
+                        <div class="cyber-value" id="meshLatency" style="font-size: 1.5em; font-weight: bold; color: #fff; font-family: monospace;">14</div>
+                    </div>
+                    <div class="cyber-box" style="background: rgba(255, 51, 51, 0.05); border: 1px solid #ff3333; padding: 10px; border-radius: 4px; text-align: center;">
+                        <div class="cyber-label" style="font-size: 0.75em; color: #ff3333; font-family: monospace;">ACTIVE EMGS</div>
+                        <div class="cyber-value warning-text" id="activeEmg" style="font-size: 1.5em; font-weight: bold; color: #ff3333; font-family: monospace;">0</div>
+                    </div>
+                    <div class="cyber-box" style="background: rgba(0, 170, 238, 0.05); border: 1px solid #00aaee; padding: 10px; border-radius: 4px; text-align: center;">
+                        <div class="cyber-label" style="font-size: 0.75em; color: #00aaee; font-family: monospace;">SUCCESS %</div>
+                        <div class="cyber-value success-text" style="font-size: 1.5em; font-weight: bold; color: #00aaee; font-family: monospace;"><span id="successRate">100</span>%</div>
+                    </div>
+                </div>
+                <!-- Mini Terminal Log -->
+                <div class="cyber-terminal" style="background: #000; border: 1px solid #333; height: 120px; overflow-y: auto; font-family: monospace; font-size: 0.85em; display: flex; flex-direction: column;">
+                    <div class="terminal-header" style="background: #111; color: #888; padding: 2px 5px; font-size: 0.8em; border-bottom: 1px solid #333;">V2X MESH LOG_</div>
+                    <div id="logList" class="cyber-log-list" style="padding: 5px;"></div>
+                </div>
+            </div>
+
+            <!-- Process Timeline Container -->
+            <div class="panelSection" id="timelineContainer">
+                <h3>Current Timeline</h3>
+                <div id="timelineProgress">
+                    <!-- Dynamic steps injected here -->
+                    <div class="timeline-empty">Monitoring...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Popup Panel -->
+    <div id="emergencyPopup" class="hidden">
+        <div class="popup-header">
+            <h3>Emergency Override</h3>
+            <button onclick="window.closeEmergencyPopup()">X</button>
+        </div>
+        <div class="popup-body">
+            <p>Target: <span id="targetPlate"></span></p>
+            <canvas id="diagnosticCanvas" width="310" height="80"
+                style="margin-bottom: 10px; border: 1px solid #1a2a4c; background: #02050a; box-shadow: inset 0 0 10px #ff3333;"></canvas>
+            <div id="issueOptions">
+                <h4>Select Incident Type:</h4>
+                <button class="option-btn" onclick="window.confirmEmergency('breakdown', 'tire')">Tire Puncture</button>
+                <button class="option-btn" onclick="window.confirmEmergency('breakdown', 'engine')">Engine
+                    Failure</button>
+                <button class="option-btn" onclick="window.confirmEmergency('medical', 'general')">Medical
+                    Critical</button>
+            </div>
+            <div class="driver-cond">
+                <label>Driver Condition:</label>
+                <select id="driverCondition">
+                    <option value="conscious">Conscious</option>
+                    <option value="injured">Injured</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Responder Prompt Popup -->
+    <div id="responderPopup" class="hidden">
+        <div class="popup-header" style="background:#00f0ff; color:#000;">
+            <h3>Incoming SOS Request</h3>
+        </div>
+        <div class="popup-body">
+            <p>Target ID: <strong id="reqTargetId">--</strong> needs help!</p>
+            <p>Distance: <span id="reqDistance">--</span>m</p>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="option-btn" style="border-color:#00ff00; color:#00ff00"
+                    onclick="window.resolveResponderPrompt(true)">Accept</button>
+                <button class="option-btn" style="border-color:#ff3333; color:#ff3333"
+                    onclick="window.resolveResponderPrompt(false)">Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen SOS Dispatch Wizard -->
+    <div id="sosWizard" class="wizard-overlay hidden">
+        <div class="wizard-container">
+            <div class="wizard-header">
+                <h2>V2X EMERGENCY DISPATCH TERMINAL</h2>
+                <button class="close-wizard" onclick="window.closeSOSWizard()">✖</button>
+            </div>
+
+            <div class="wizard-body">
+                <!-- Step 1: Category -->
+                <div id="wizardStep1" class="wizard-step">
+                    <h3>Select Incident Category</h3>
+                    <div class="wizard-options">
+                        <button class="wizard-btn mech-btn"
+                            onclick="window.selectWizardCategory('Mechanical Failure')">⚙️ Mechanical Failure</button>
+                        <button class="wizard-btn med-btn" onclick="window.selectWizardCategory('Medical Emergency')">⚕️
+                            Medical Emergency</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Specifics -->
+                <div id="wizardStep2" class="wizard-step hidden">
+                    <h3 id="wizardStep2Title">Select Specific Issue</h3>
+                    <div class="wizard-options" id="wizardSubOptions">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Step 3: Custom Input String -->
+                <div id="wizardStep3" class="wizard-step hidden">
+                    <h3>Specify Detail (Other)</h3>
+                    <input type="text" id="wizardCustomInput" class="wizard-input"
+                        placeholder="Type specific details here... e.g., 'Broken Axle'">
+                    <button class="wizard-btn submit-btn" onclick="window.confirmWizardCustom()">Confirm Issue</button>
+                </div>
+
+                <!-- Final Confirm Broadcaster -->
+                <div id="wizardFinal" class="wizard-step hidden">
+                    <h3>Review Dispatch Payload</h3>
+                    <div class="payload-box" id="wizardPayloadDisplay">--</div>
+                    <button class="wizard-btn broadcast-btn" onclick="window.broadcastSOS()">🚨 BROADCAST TO MESH
+                        NETWORK 🚨</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
